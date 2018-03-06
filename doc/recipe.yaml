@@ -1,0 +1,366 @@
+# Spec version
+swagger: '2.0'
+
+info:
+    title: Recipes API
+    description: "An API to get Recipes and their information."
+    version: "2.0.0"
+
+# Scheme information not included
+# Host information not included
+
+basePath: /api/v2/recipes
+
+consumes: ["application/json"]
+
+produces: ["application/json"]
+
+paths:
+
+      '/token':
+          post:
+            summary: Get token for user
+            description: |
+                Return the token for the user
+            tags:
+                - User
+            operationId: getToken
+            parameters:
+                - $ref: "#/parameters/userBodyParam"
+            responses:
+                200:
+                  description: Successful response
+                  schema:
+                      title: Response
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+
+      /:
+        get:
+            summary: Gets all recipes
+            description: |
+                Return a list containing all recipes.
+            tags:
+                - Recipe
+            operationId: getAllRecipes
+            parameters:
+              - $ref: "#/parameters/limitQueryParam"
+              - $ref: "#/parameters/offsetQueryParam"
+              - $ref: "#/parameters/nameQueryParam"
+              - $ref: "#/parameters/difficultyQueryParam"
+              - $ref: "#/parameters/vegetarianQueryParam"
+            responses:
+                200:
+                  description: Successful response
+                  schema:
+                      title: Response
+                      type: object
+                      properties:
+                        data:
+                          type: array
+                          items:
+                            $ref: "#/definitions/RecipeEntityDef"
+                        paging:
+                          $ref: "#/definitions/paging"
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+
+        post:
+            summary: Create a recipe
+            description: |
+                Creates a recipe
+            tags:
+                - Recipe
+            operationId: createRecipe
+            parameters:
+                 - $ref: "#/parameters/recipeBodyParam"
+            responses:
+                200:
+                  description: Successful response
+                  schema:
+                     $ref: "#/definitions/RecipeEntityDef"
+                401:
+                  $ref: "#/responses/Unauthorized"
+                403:
+                  $ref: "#/responses/Forbidden"
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+
+      '/{uniqueId}/':
+
+        get:
+            summary: Fetches the recipe information
+            description: |
+                Return a recipe by id
+            tags:
+                - Recipe
+            operationId: getRecipeById
+            parameters:
+                - $ref: "#/parameters/uniqueIdPathParam"
+            responses:
+                200:
+                  description: Successful response
+                  schema:
+                    $ref: "#/definitions/RecipeEntityDef"
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+        put:
+            summary: Changes the recipe information
+            description: |
+                Updates a recipe
+            tags:
+                - Recipe
+            operationId: updateRecipe
+            parameters:
+                - $ref: "#/parameters/recipeBodyParam"
+                - $ref: "#/parameters/uniqueIdPathParam"
+            responses:
+                200:
+                  description: Successful response
+                  schema:
+                    $ref: "#/definitions/RecipeEntityDef"
+                401:
+                  $ref: "#/responses/Unauthorized"
+                403:
+                  $ref: "#/responses/Forbidden"
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+        delete:
+            summary: Deletes a recipe
+            description: |
+                Deletes a recipe
+            tags:
+                - Recipe
+            operationId: deleteRecipe
+            parameters:
+                - $ref: "#/parameters/uniqueIdPathParam"
+            responses:
+                200:
+                  description: Successful response
+                401:
+                  $ref: "#/responses/Unauthorized"
+                403:
+                  $ref: "#/responses/Forbidden"
+                404:
+                  $ref: "#/responses/NotFound"
+                500:
+                  $ref: "#/responses/InternalServerError"
+
+      '/{uniqueId}/rating':
+
+            post:
+                summary: Rate a recipe
+                description: |
+                    Rate a recipe
+                tags:
+                    - Rating
+                operationId: rateRecipe
+                parameters:
+                    - $ref: "#/parameters/uniqueIdPathParam"
+                    - $ref: "#/parameters/ratingBodyParam"
+                responses:
+                    200:
+                      description: Successful response
+                    404:
+                      $ref: "#/responses/NotFound"
+                    500:
+                      $ref: "#/responses/InternalServerError"
+
+definitions:
+    RecipeEntityDef:
+        title: Properties of a recipe
+        type: object
+        description: Define all properties for a recipe
+        required:
+        - uniqueId
+        - name
+        - difficulty
+        - preparationTime
+        - vegetarian
+        - createdBy
+        - updatedBy
+        properties:
+            uniqueId:
+                type: integer
+                example: 1
+            name:
+                type: string
+                maxLength: 255
+                example: Pad Thai
+            difficulty:
+                type: integer
+                example: 3 # Between 1 and 3
+            preparationTime:
+                type: integer
+                example: 15 # In minutes
+            vegetarian:
+                type: boolean
+            createdBy:
+                type: integer
+                example: 10
+            updatedBy:
+                type: integer
+                example: 10
+
+    RatingEntityDef:
+            title: Properties of a rating
+            type: object
+            required:
+            - rating
+            properties:
+                rating:
+                    type: integer
+                    example: 1 # between 1 and 5
+
+    UserEntityDef:
+            title: Properties of a rating
+            type: object
+            required:
+            - login
+            - hashedPassword
+            properties:
+                login:
+                    type: string
+                    example: jsoto
+                hashedPassword:
+                    type: string
+                    example: jfkjdkjfih # hashed password
+
+    unauthorized:
+        title: Properties of entity response error 401
+        type: object
+        description: "The request was a legal request, but the server is refusing to respond to it.
+                    For use when authentication is possible but has failed or not yet been provided"
+        properties:
+            msg:
+                type: string
+
+    forbidden:
+        title: Properties of entity response error 403
+        type: object
+        description: "Forbidden. The access is not allowed"
+        properties:
+            msg:
+                type: string
+
+    notFound:
+        title: Properties of entity response error 404
+        type: object
+        description: "Not Found"
+        properties:
+            msg:
+                type: string
+
+    internalServerError:
+        title: Properties of entity response error 500
+        type: object
+        description: "An error prevents the system from fulfilling the request"
+        properties:
+            msg:
+                type: string
+
+    paging:
+      title: Pagination
+      type: object
+      properties:
+        next:
+          type: string
+          description: URL to fetch the next list of recipes
+
+parameters:
+
+    limitQueryParam:
+        name: limit
+        in: query
+        description: The limit
+        required: false
+        type: integer
+
+    offsetQueryParam:
+        name:  offset
+        in: query
+        description: The offset
+        required: false
+        type: integer
+
+    vegetarianQueryParam:
+        name:  vegetarian
+        in: query
+        description: The vegetarian of the recipe
+        required: false
+        type: boolean
+
+    nameQueryParam:
+        name:  name
+        in: query
+        description: The name of the recipe
+        required: false
+        type: string
+
+    difficultyQueryParam:
+        name:  difficulty
+        in: query
+        description: The difficulty of the recipe
+        required: false
+        type: integer
+
+    uniqueIdPathParam:
+        name: uniqueId
+        in: path
+        description: The recipe identifier
+        required: true
+        type: integer
+
+    recipeBodyParam:
+      name: recipeBodyParam
+      in: body
+      description: recipe body param
+      schema:
+        $ref: "#/definitions/RecipeEntityDef"
+
+    ratingBodyParam:
+      name: ratingBodyParam
+      in: body
+      description: rating body parameter
+      schema:
+        $ref: "#/definitions/RatingEntityDef"
+
+    userBodyParam:
+          name: userBodyParam
+          in: body
+          description: user body parameter
+          schema:
+            $ref: "#/definitions/UserEntityDef"
+
+responses:
+    Unauthorized:
+        description: "The request was a legal request, but the server is refusing to respond to it.
+                    For use when authentication is possible but has failed or not yet been provided"
+        schema:
+          $ref: "#/definitions/unauthorized"
+    Forbidden:
+        description: "Forbidden. The access is not allowed"
+        schema:
+          $ref: "#/definitions/forbidden"
+    NotFound:
+        description: "Not Found"
+        schema:
+          $ref: "#/definitions/notFound"
+    InternalServerError:
+          description: "An error prevents the system from fulfilling the request"
+          schema:
+            $ref: "#/definitions/internalServerError"
